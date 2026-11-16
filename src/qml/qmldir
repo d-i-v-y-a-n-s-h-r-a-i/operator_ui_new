@@ -1,0 +1,7 @@
+module Qml
+TelemetryCard 1.0 TelemetryCard.qml
+ArtificialHorizon 1.0 hud/ArtificialHorizon.qml
+CompassTape 1.0 hud/CompassTape.qml
+ThrusterGauges 1.0 hud/ThrusterGauges.qml
+TacticalMap 1.0 map/TacticalMap.qml
+FPVOverlay 1.0 video/FPVOverlay.qml

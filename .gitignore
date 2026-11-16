@@ -1,0 +1,19 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C++ Build directories
+build/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+
+# Editor / IDE directories
+.vscode/
+.idea/
+*.swp
+*.bak
+
+# Temporary and buffer caches
+.freebuff/

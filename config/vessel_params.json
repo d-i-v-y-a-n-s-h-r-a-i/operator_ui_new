@@ -1,0 +1,43 @@
+{
+  "vessel": {
+    "name": "TANDAV CI4",
+    "callsign": "TANDAV-01",
+    "type": "USV_AUV_HYBRID",
+    "length_m": 4.2,
+    "beam_m": 1.6,
+    "displacement_kg": 650,
+    "max_speed_kts": 18.0
+  },
+  "propulsion": {
+    "type": "DIFFERENTIAL_TWIN_THRUSTER",
+    "deadzone": 0.05,
+    "rate_limit": 1.5,
+    "reverse_scale": 0.75,
+    "max_rpm": 3200
+  },
+  "network": {
+    "listen_ip": "0.0.0.0",
+    "listen_port": 9001,
+    "target_ip": "192.168.1.100",
+    "target_port": 9000,
+    "heartbeat_interval_ms": 500,
+    "teleop_rate_hz": 20
+  },
+  "video": {
+    "primary_rtsp": "rtsp://192.168.1.100:8554/live",
+    "codec": "H265",
+    "target_fps": 30,
+    "target_bitrate_kbps": 4500,
+    "resolution_width": 1920,
+    "resolution_height": 1080
+  },
+  "failsafe": {
+    "watchdog_timeout_ms": 1500,
+    "battery_warning_pct": 25,
+    "battery_critical_pct": 15,
+    "battery_max_temp_c": 55.0,
+    "leak_action": "EMERGENCY_STOP_BILGE_ENGAGE",
+    "comms_loss_action": "HOLD_THEN_RTL"
+  }
+}
+

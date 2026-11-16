@@ -1,0 +1,69 @@
+{
+  "vessel_model": "Tandav_CI4_Polytec_Spark",
+  "hull_length_oa_m": 2.79,
+  "hull_beam_m": 1.18,
+  "stock_weight_lbs": 420.0,
+  "stripped_deck_shed_lbs": 185.0,
+  "bare_bottom_hull_mass_kg": 106.6,
+  "hydrostatics": {
+    "target_lcg_from_transom_m": 1.20,
+    "target_vcg_from_keel_m": 0.21,
+    "kb_m": 0.12,
+    "bm_m": 0.58,
+    "kg_m": 0.21,
+    "gm_metacentric_height_m": 0.49,
+    "minimum_gm_threshold_m": 0.45
+  },
+  "planing_dynamics_60kmh": {
+    "cruising_speed_kmh": 60.0,
+    "cruising_speed_ms": 16.67,
+    "froude_displacement_fn": 1.85,
+    "dynamic_trim_angle_deg": 3.2,
+    "porpoising_trim_limit_deg": 4.5,
+    "bow_diving_margin_deg": 1.8
+  },
+  "component_mass_manifest": [
+    {
+      "name": "bare_polytec_bottom_hull",
+      "mass_kg": 106.6,
+      "x_from_transom_m": 1.35,
+      "y_transverse_m": 0.0,
+      "z_from_keel_m": 0.14
+    },
+    {
+      "name": "rotax_900_ace_engine_jetpump",
+      "mass_kg": 61.2,
+      "x_from_transom_m": 0.95,
+      "y_transverse_m": 0.0,
+      "z_from_keel_m": 0.22
+    },
+    {
+      "name": "aux_lifepo4_24v_battery_pack",
+      "mass_kg": 21.8,
+      "x_from_transom_m": 1.35,
+      "y_transverse_m": 0.0,
+      "z_from_keel_m": 0.16
+    },
+    {
+      "name": "waterproof_compute_enclosure",
+      "mass_kg": 14.5,
+      "x_from_transom_m": 1.22,
+      "y_transverse_m": 0.0,
+      "z_from_keel_m": 0.28
+    },
+    {
+      "name": "foveated_sensor_mast_6_cameras",
+      "mass_kg": 10.0,
+      "x_from_transom_m": 1.32,
+      "y_transverse_m": 0.0,
+      "z_from_keel_m": 0.72
+    },
+    {
+      "name": "actuator_servos_bilge_harness",
+      "mass_kg": 8.2,
+      "x_from_transom_m": 0.85,
+      "y_transverse_m": 0.0,
+      "z_from_keel_m": 0.18
+    }
+  ]
+}
