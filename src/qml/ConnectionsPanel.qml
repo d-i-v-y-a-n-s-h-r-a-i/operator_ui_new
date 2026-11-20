@@ -24,7 +24,12 @@ Item {
     property real lm: 0.0                          // 0 night .. 1 day  (same number as appWindow.lm)
     property color accent: "#00f0ff"
     property var monitor: null                     // linkMonitor, or null -> demo data
+    property var serial: (typeof loraBridge !== "undefined") ? loraBridge : null     // lora_bridge.py (SERIAL TERMINAL tab)
+    property int tab: 0                            // 0 = CONNECTIONS (health checks), 1 = SERIAL TERMINAL
     signal closeRequested()
+
+    // While the terminal tab is on screen, Up / Down / Space / 1-4 must never reach the boat (somebody is only scrolling the log)
+    Binding { target: root.serial; property: "motorEnabled"; value: false; when: root.serial !== null && root.open && root.tab === 1 }
 
     opacity: open ? 1.0 : 0.0                      // closed = fully invisible and no longer takes clicks
     visible: opacity > 0.01
@@ -279,6 +284,26 @@ Item {
                 }
             }
 
+            // tabs
+            Row {
+                id: tabs
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: root.px(4)
+                Repeater {
+                    model: [ { t: "CONNECTIONS" }, { t: "SERIAL TERMINAL" } ]
+                    Rectangle {
+                        readonly property bool on: root.tab === index
+                        width: tabTxt.implicitWidth + root.px(36); height: root.px(36); radius: height / 2
+                        color: on ? Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.18) : (tabMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.07) : "transparent")
+                        border.width: 1; border.color: on ? root.accent : root.line
+                        Text { id: tabTxt; anchors.centerIn: parent; text: modelData.t; color: on ? root.accent : root.tMuted
+                               font.pixelSize: root.px(11); font.bold: true; font.letterSpacing: 1.4; font.family: "Segoe UI, Inter, sans-serif" }
+                        MouseArea { id: tabMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.tab = index }
+                    }
+                }
+            }
+
             // right side: counters, run button, close
             Row {
                 anchors.right: parent.right
@@ -286,7 +311,7 @@ Item {
                 spacing: root.px(14)
 
                 Repeater {
-                    model: [ { k: "ok", t: "OK" }, { k: "warn", t: "WARN" }, { k: "fail", t: "FAULT" } ]
+                    model: root.tab === 0 ? [ { k: "ok", t: "OK" }, { k: "warn", t: "WARN" }, { k: "fail", t: "FAULT" } ] : []
                     Rectangle {
                         readonly property int n: { root.tick; return root.sum[modelData.k] || 0; }
                         anchors.verticalCenter: parent.verticalCenter
@@ -304,6 +329,7 @@ Item {
 
                 Rectangle {                                          // RUN ALL CHECKS
                     id: runBtn
+                    visible: root.tab === 0
                     anchors.verticalCenter: parent.verticalCenter
                     width: root.px(188); height: root.px(38); radius: height / 2
                     color: runMouse.pressed ? Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.30) : Qt.rgba(root.accent.r, root.accent.g, root.accent.b, runMouse.containsMouse ? 0.22 : 0.14)
@@ -345,9 +371,23 @@ Item {
 
         Rectangle { id: headLine; anchors.top: head.bottom; anchors.left: parent.left; anchors.right: parent.right; height: 1; color: root.line }
 
+        // ------------------------------------------------------------ SERIAL TERMINAL tab
+        SerialTerminal {
+            id: terminalTab
+            visible: root.tab === 1
+            active: root.open && root.tab === 1
+            anchors.top: headLine.bottom; anchors.topMargin: root.px(16)
+            anchors.bottom: parent.bottom; anchors.bottomMargin: root.px(20)
+            anchors.left: parent.left; anchors.right: parent.right
+            anchors.leftMargin: root.px(28); anchors.rightMargin: root.px(28)
+            sf: root.sf; lm: 0.0; accent: root.accent          // the card stays dark in day mode too -> terminal always uses the dark palette
+            serial: root.serial
+        }
+
         // ------------------------------------------------------------ banner (overall verdict)
         Rectangle {
             id: banner
+            visible: root.tab === 0
             anchors.top: headLine.bottom; anchors.topMargin: root.px(16)
             anchors.left: parent.left; anchors.right: parent.right
             anchors.leftMargin: root.px(28); anchors.rightMargin: root.px(28)
@@ -393,6 +433,7 @@ Item {
         // ------------------------------------------------------------ body: 3 columns of group cards
         Flickable {
             id: flick
+            visible: root.tab === 0
             anchors.top: banner.bottom; anchors.topMargin: root.px(16)
             anchors.bottom: foot.top; anchors.bottomMargin: root.px(8)
             anchors.left: parent.left; anchors.right: parent.right
@@ -417,6 +458,7 @@ Item {
         // ------------------------------------------------------------ footer legend
         Item {
             id: foot
+            visible: root.tab === 0
             anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom
             anchors.leftMargin: root.px(28); anchors.rightMargin: root.px(28)
             height: root.px(38)

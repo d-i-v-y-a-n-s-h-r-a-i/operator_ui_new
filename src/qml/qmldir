@@ -12,3 +12,4 @@ FPVOverlay 1.0 video/FPVOverlay.qml
 ConnectionsPanel 1.0 ConnectionsPanel.qml
 LoraControlHud 1.0 LoraControlHud.qml
 DriveRays 1.0 DriveRays.qml
+SerialTerminal 1.0 SerialTerminal.qml
