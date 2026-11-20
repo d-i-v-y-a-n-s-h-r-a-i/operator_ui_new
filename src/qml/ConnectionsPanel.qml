@@ -20,6 +20,12 @@ Item {
     id: root
 
     property bool open: false
+    visible: open || card.scale < 0.99 || opacity > 0.01
+    opacity: open ? 1.0 : 0.0
+    Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+    focus: open
+    Keys.onEscapePressed: root.closeRequested()
+
     property real sf: 1.0
     property real lm: 0.0                          // 0 night .. 1 day  (same number as appWindow.lm)
     property color accent: "#00f0ff"

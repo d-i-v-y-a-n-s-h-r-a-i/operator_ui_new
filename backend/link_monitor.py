@@ -157,6 +157,7 @@ class LinkMonitor(QObject):
         self._vs = None
         self._mm = None
         self._tm = None
+        self._lora = None
         self._uplink = None                          # (host, port) override; default = telemetry_mgr.uplink_addr
         self._log_path = log_path
 
@@ -199,6 +200,18 @@ class LinkMonitor(QObject):
             self._on_sink_changed()
         except Exception:
             pass
+
+    def attach_lora(self, bridge):
+        self._lora = bridge
+        try:
+            bridge.statusChanged.connect(self._rebuild_if_open)
+            bridge.feedbackChanged.connect(self._rebuild_if_open)
+        except Exception:
+            pass
+
+    def _rebuild_if_open(self):
+        if self._panel_open:
+            self._rebuild()
 
     def note_telemetry(self, kind, src=None, seq=None):
         """kind: 'bin' (77-byte frame) | 'json' (telemetry JSON) | 'autonomy' (AUTONOMY_STATUS) | 'threats'"""
@@ -428,6 +441,10 @@ class LinkMonitor(QObject):
         return _ok(detail=d, note=note)
 
     def _c_lora(self, now, live):
+        b = getattr(self, "_lora", None)
+        if b is not None and getattr(b, "usbConnected", False):
+            h = b.health_check()
+            return {"ok": _ok, "warn": _warn, "fail": _fail}[h.pop("status")](**h)
         note = ("The GCS has no LoRa radio. The STM32 reports the LoRa link quality (0-100 %) inside the telemetry frame. "
                 "Boat side: heartbeat lost after 5 s, SAFE STOP (throttle 0, brake 100, engine cut) after 10 s of silence.")
         if not live:

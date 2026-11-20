@@ -422,14 +422,10 @@ def main():
     app.aboutToQuit.connect(link_monitor.shutdown)
     engine.rootContext().setContextProperty("linkMonitor", link_monitor)
 
-    # Start LoRa USB Serial receiver (ESP32 on COM3 @ 115200)
-    try:
-        from backend.lora_serial import LoraSerialReceiver
-        lora_rx = LoraSerialReceiver(port=os.environ.get("TANDAV_LORA_PORT", "COM3"), baud=115200, udp_target=("127.0.0.1", 9001))
-        lora_rx.start()
-        app.aboutToQuit.connect(lora_rx.stop)
-    except Exception as e:
-        print("[LoRa Serial] Could not initialize serial receiver:", e)
+    # LoRa keyboard control + telemetry bridge (ESP32 via QSerialPort @ 115200)
+    from backend.lora_bridge import LoraBridge
+    lora = LoraBridge()
+    engine.rootContext().setContextProperty("loraBridge", lora)
 
     udp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     udp_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -613,6 +609,11 @@ def main():
 
     if not engine.rootObjects():
         sys.exit(-1)
+
+    win = engine.rootObjects()[0]
+    lora.install_on(win)                      # global key capture
+    link_monitor.attach_lora(lora)            # popup ki LoRa row (Step 3)
+    app.aboutToQuit.connect(lora.shutdown)    # quit par idle packet flush
 
     sys.exit(app.exec())
 

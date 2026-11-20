@@ -1625,7 +1625,30 @@ ApplicationWindow {
         lm: appWindow.lm
         accent: appWindow.accentCyan
         monitor: (typeof linkMonitor !== "undefined") ? linkMonitor : null
-        onCloseRequested: appWindow.settingsViewOpen = false
+        onCloseRequested: {
+            appWindow.settingsViewOpen = false
+            if (monitor && typeof monitor.setPanelOpen === "function") monitor.setPanelOpen(false)
+        }
+    }
+
+    Shortcut {
+        sequence: "Esc"
+        context: Qt.ApplicationShortcut
+        enabled: appWindow.settingsViewOpen
+        onActivated: appWindow.settingsViewOpen = false
+    }
+
+    // ---- LORA MANUAL CONTROL HUD (keyboard + touch teleop, status pill, feedback bars) ----
+    LoraControlHud {
+        id: loraHud
+        sf: scaleFactor
+        lm: appWindow.lm
+        accent: appWindow.accentCyan
+        anchors.right: parent.right
+        anchors.rightMargin: Math.round(24 * scaleFactor)
+        anchors.bottom: layer5_bottomDockBar.top
+        anchors.bottomMargin: Math.round(12 * scaleFactor)
+        z: 60
     }
 
     Item {

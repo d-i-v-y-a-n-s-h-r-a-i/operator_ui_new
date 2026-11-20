@@ -10,3 +10,4 @@ TacticalMap 1.0 map/TacticalMap.qml
 FPVOverlay 1.0 video/FPVOverlay.qml
 
 ConnectionsPanel 1.0 ConnectionsPanel.qml
+LoraControlHud 1.0 LoraControlHud.qml
