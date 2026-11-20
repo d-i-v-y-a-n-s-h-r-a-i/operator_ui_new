@@ -1,3 +1,4 @@
+import PySide6.QtQuick
 import sys
 import os
 import socket
@@ -27,6 +28,13 @@ class VesselState(QObject):
     targetSpeedChanged = Signal()
     threatsChanged = Signal()
     videoSinkChanged = Signal()
+    clusterJsonChanged = Signal()
+    horizonDegChanged = Signal()
+    horizonYChanged = Signal()
+    wpBearingChanged = Signal()
+    wpDistanceNmChanged = Signal()
+    wpNameChanged = Signal()
+    navPathJsonChanged = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -56,6 +64,13 @@ class VesselState(QObject):
         self._targetSpeed = 14.0
         self._threats = []
         self._videoSink = None
+        self._clusterJson = ""
+        self._horizonDeg = float("nan")
+        self._horizonY = float("nan")
+        self._wpBearing = 47.0
+        self._wpDistanceNm = 0.22
+        self._wpName = "WP 01"
+        self._navPathJson = ""
 
     @Property(float, notify=attitudeChanged)
     def pitch(self):
@@ -111,9 +126,21 @@ class VesselState(QObject):
     def latitude(self):
         return self._latitude
 
+    @latitude.setter
+    def latitude(self, val):
+        if self._latitude != val:
+            self._latitude = val
+            self.positionChanged.emit()
+
     @Property(float, notify=positionChanged)
     def longitude(self):
         return self._longitude
+
+    @longitude.setter
+    def longitude(self, val):
+        if self._longitude != val:
+            self._longitude = val
+            self.positionChanged.emit()
 
     @Property(float, notify=depthChanged)
     def depth(self):
@@ -238,6 +265,76 @@ class VesselState(QObject):
             self._videoSink = val
             self.videoSinkChanged.emit()
 
+    @Property(str, notify=clusterJsonChanged)
+    def clusterJson(self):
+        return self._clusterJson
+
+    @clusterJson.setter
+    def clusterJson(self, val):
+        if self._clusterJson != val:
+            self._clusterJson = val
+            self.clusterJsonChanged.emit()
+
+    @Property(float, notify=horizonDegChanged)
+    def horizonDeg(self):
+        return self._horizonDeg
+
+    @horizonDeg.setter
+    def horizonDeg(self, val):
+        if self._horizonDeg != val:
+            self._horizonDeg = val
+            self.horizonDegChanged.emit()
+
+    @Property(float, notify=horizonYChanged)
+    def horizonY(self):
+        return self._horizonY
+
+    @horizonY.setter
+    def horizonY(self, val):
+        if self._horizonY != val:
+            self._horizonY = val
+            self.horizonYChanged.emit()
+
+    @Property(float, notify=wpBearingChanged)
+    def wpBearing(self):
+        return self._wpBearing
+
+    @wpBearing.setter
+    def wpBearing(self, val):
+        if self._wpBearing != val:
+            self._wpBearing = val
+            self.wpBearingChanged.emit()
+
+    @Property(float, notify=wpDistanceNmChanged)
+    def wpDistanceNm(self):
+        return self._wpDistanceNm
+
+    @wpDistanceNm.setter
+    def wpDistanceNm(self, val):
+        if self._wpDistanceNm != val:
+            self._wpDistanceNm = val
+            self.wpDistanceNmChanged.emit()
+
+    @Property(str, notify=wpNameChanged)
+    def wpName(self):
+        return self._wpName
+
+    @wpName.setter
+    def wpName(self, val):
+        if self._wpName != val:
+            self._wpName = val
+            self.wpNameChanged.emit()
+
+    @Property(str, notify=navPathJsonChanged)
+    def navPathJson(self):
+        return self._navPathJson
+
+    @navPathJson.setter
+    def navPathJson(self, val):
+        if self._navPathJson != val:
+            self._navPathJson = val
+            self.navPathJsonChanged.emit()
+
 class TelemetryManager(QObject):
     connectionChanged = Signal()
 
@@ -307,8 +404,32 @@ def main():
     vessel_state = VesselState()
     telemetry_mgr = TelemetryManager()
 
+    # Offline Vector Map & GNSS Backend
+    from backend.mission_map_backend import MissionMapBackend
+    from backend.link_monitor import LinkMonitor
+    maps_dir = os.path.join(base_dir, "maps")
+    mission_map = MissionMapBackend(maps_dir)
+    mission_map.startGpsd()
+    app.aboutToQuit.connect(mission_map.shutdown)
+
     engine.rootContext().setContextProperty("vesselState", vessel_state)
     engine.rootContext().setContextProperty("telemetry", telemetry_mgr)
+    engine.rootContext().setContextProperty("missionMap", mission_map)
+
+    # SYSTEM CONNECTIONS pop-up (gear button): health of every link
+    link_monitor = LinkMonitor(app)
+    link_monitor.attach(vessel_state, mission_map, telemetry_mgr)
+    app.aboutToQuit.connect(link_monitor.shutdown)
+    engine.rootContext().setContextProperty("linkMonitor", link_monitor)
+
+    # Start LoRa USB Serial receiver (ESP32 on COM3 @ 115200)
+    try:
+        from backend.lora_serial import LoraSerialReceiver
+        lora_rx = LoraSerialReceiver(port=os.environ.get("TANDAV_LORA_PORT", "COM3"), baud=115200, udp_target=("127.0.0.1", 9001))
+        lora_rx.start()
+        app.aboutToQuit.connect(lora_rx.stop)
+    except Exception as e:
+        print("[LoRa Serial] Could not initialize serial receiver:", e)
 
     udp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     udp_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -322,12 +443,16 @@ def main():
         received = False
         while True:
             try:
-                data, _ = udp_sock.recvfrom(2048)
+                data, _addr = udp_sock.recvfrom(2048)
                 last_packet_time[0] = time.time()
                 received = True
                 if len(data) == 77:
                     magic, seq, p, r, y, lat, lon, spd, hdg, bv, ba, bpct, btmp, tl, tr, dpt, wt, lk, arm, md, lq = struct.unpack('<IIfffddffffBfffffBBBB', data)
                     if magic == 0x544E4456:
+                        link_monitor.note_telemetry("bin", _addr[0], seq)
+                        link_monitor.note_telemetry("autonomy")
+                        link_monitor.note_can(0x200)
+                        link_monitor.note_can(0x300)
                         vessel_state.pitch = p
                         vessel_state.roll = r
                         vessel_state.yaw = y
@@ -345,6 +470,10 @@ def main():
                         vessel_state._leftThruster = tl
                         vessel_state._rightThruster = tr
                         vessel_state._linkQuality = lq
+                        if lat != 0.0 and lon != 0.0:
+                            vessel_state.latitude = lat
+                            vessel_state.longitude = lon
+                            mission_map.setGnss(lat, lon, hdg, spd, 1)
                         vessel_state.attitudeChanged.emit()
                         vessel_state.navigationChanged.emit()
                         vessel_state.depthChanged.emit()
@@ -355,8 +484,24 @@ def main():
                         vessel_state.powerChanged.emit()
                         vessel_state.propulsionChanged.emit()
                         vessel_state.linkChanged.emit()
+                        # Keep InstrumentCluster LIVE
+                        vessel_state.clusterJson = json.dumps({
+                            "seq": int(seq),
+                            "speedKn": round(vessel_state.speed, 1),
+                            "speedKmh": round(vessel_state.speed * 1.852, 1),
+                            "rpm": vessel_state.rpm,
+                            "gear": "F" if vessel_state.speed > 0.5 else "N",
+                            "driveMode": "SPORT",
+                            "control": vessel_state.mode,
+                            "fuelPct": 85,
+                            "coolantC": round(vessel_state.coolantTemp, 1),
+                            "battV": round(vessel_state.batteryVoltage, 1),
+                            "tripKm": round(seq * 0.001, 2),
+                            "engineHours": 328.2
+                        })
                 elif len(data) == 17:
                     can_id, dlc, payload, ts = struct.unpack('<IB8sI', data)
+                    link_monitor.note_can(can_id)
                     if can_id == 0x200:
                         vessel_state.rpm = (payload[0] << 8) | payload[1]
                         vessel_state.coolantTemp = float(payload[2] - 40)
@@ -365,15 +510,62 @@ def main():
                         vessel_state._batteryVoltage = raw_v * 0.01
                         vessel_state.powerChanged.emit()
                 else:
+                    text_str = ""
                     try:
-                        obj = json.loads(data.decode("utf-8"))
-                        if obj.get("type") == "THREATS":
-                            vessel_state.threats = obj.get("threats", [])
-                        elif obj.get("type") == "AUTONOMY_STATUS":
-                            if "mode" in obj:
-                                vessel_state.mode = obj["mode"]
+                        text_str = data.decode("utf-8").strip()
                     except Exception:
                         pass
+
+                    if "HB:STM" in text_str or "VS=" in text_str:
+                        from backend.lora_serial import parse_lora_line, make_cluster_json
+                        parsed = parse_lora_line(text_str)
+                        if parsed:
+                            seq_val = int(time.time() * 10) % 100000
+                            link_monitor.note_telemetry("bin", _addr[0], seq_val)
+                            vessel_state.heading = parsed.get("heading", vessel_state.heading)
+                            vessel_state.yaw = vessel_state.heading
+                            vessel_state.speed = parsed.get("speed", vessel_state.speed)
+                            vessel_state.mode = parsed.get("mode", vessel_state.mode)
+                            lat = parsed.get("lat", 0.0)
+                            lon = parsed.get("lon", 0.0)
+                            if lat != 0.0 and lon != 0.0:
+                                vessel_state.latitude = lat
+                                vessel_state.longitude = lon
+                                mission_map.setGnss(lat, lon, vessel_state.heading, vessel_state.speed, parsed.get("fix", 1))
+                            if parsed.get("threats"):
+                                vessel_state.threats = parsed["threats"]
+                            vessel_state.attitudeChanged.emit()
+                            vessel_state.navigationChanged.emit()
+                            vessel_state.modeChanged.emit()
+                            vessel_state.clusterJson = make_cluster_json(parsed, seq_val)
+                    elif text_str.startswith("{"):
+                        try:
+                            obj = json.loads(text_str)
+                            if "speedKn" in obj or "speedKmh" in obj or "fuelPct" in obj:
+                                vessel_state.clusterJson = text_str
+                            elif obj.get("type") == "THREATS":
+                                link_monitor.note_telemetry("threats")
+                                vessel_state.threats = obj.get("threats", [])
+                            elif obj.get("type") == "AUTONOMY_STATUS":
+                                link_monitor.note_telemetry("autonomy")
+                                if "mode" in obj:
+                                    vessel_state.mode = obj["mode"]
+                            elif obj.get("event") == "telemetry" or obj.get("type") == "TELEMETRY" or "speed" in obj or "speed_kmh" in obj:
+                                link_monitor.note_telemetry("json", _addr[0])
+                                if "speed_kmh" in obj and obj["speed_kmh"] is not None:
+                                    vessel_state.speed = float(obj["speed_kmh"])
+                                elif "speed" in obj and obj["speed"] is not None:
+                                    vessel_state.speed = float(obj["speed"])
+                                if "rpm" in obj and obj["rpm"] is not None:
+                                    vessel_state.rpm = int(obj["rpm"])
+                                if "mode" in obj and obj["mode"]:
+                                    vessel_state.mode = str(obj["mode"])
+                        except Exception:
+                            pass
+            except BlockingIOError:
+                break
+            except Exception:
+                break
             except BlockingIOError:
                 break
             except Exception:
@@ -392,14 +584,29 @@ def main():
             vessel_state.attitudeChanged.emit()
             vessel_state.navigationChanged.emit()
             vessel_state.engineChanged.emit()
+            vessel_state.clusterJson = json.dumps({
+                "seq": int(t * 10),
+                "speedKn": round(vessel_state.speed, 1),
+                "rpm": vessel_state.rpm,
+                "gear": "F",
+                "driveMode": "SPORT",
+                "control": vessel_state.mode,
+                "fuelPct": 84,
+                "coolantC": round(vessel_state.coolantTemp, 1),
+                "battV": 13.8,
+                "tripKm": round(t * 0.01, 1),
+                "engineHours": 328.2
+            })
 
     timer = QTimer()
     timer.timeout.connect(process_telemetry)
     timer.start(16)
 
-    font_file = os.path.join(base_dir, "src", "qml", "assets", "fonts", "SairaStencilOne.ttf")
-    if os.path.exists(font_file):
-        QFontDatabase.addApplicationFont(font_file)
+    fonts_dir = os.path.join(base_dir, "src", "qml", "assets", "fonts")
+    if os.path.exists(fonts_dir):
+        for fname in sorted(os.listdir(fonts_dir)):
+            if fname.lower().endswith((".ttf", ".otf")):
+                QFontDatabase.addApplicationFont(os.path.join(fonts_dir, fname))
 
     qml_file = os.path.join(base_dir, "src", "qml", "main.qml")
     engine.load(qml_file)

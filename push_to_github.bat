@@ -1,8 +1,14 @@
 @echo off
 title Push to GitHub
 cd /d "%~dp0"
-set PATH=C:\Users\Omkar\AppData\Local\Programs\@codebufffreebuff-desktop\resources\git\cmd;C:\Users\Omkar\AppData\Local\Programs\@codebufffreebuff-desktop\resources\git\ucrt64\bin;%PATH%
-echo Pushing TANDAV repository to https://github.com/d-i-v-y-a-n-s-h-r-a-i/operator_ui_new.git ...
+set PATH=C:\Users\anjal\AppData\Local\Programs\Git\cmd;%LOCALAPPDATA%\Programs\Git\cmd;%PATH%
+echo ======================================================================
+echo Pushing TANDAV repository to https://github.com/d-i-v-y-a-n-s-h-r-a-i/operator_ui_new.git
+echo ======================================================================
+git status
+echo.
+git add -A
+git commit -m "Update TANDAV GCS: LoRa serial telemetry, mission maps, and cluster enhancements"
 git push -u origin main
 if %ERRORLEVEL% EQU 0 (
     echo.

@@ -1,0 +1,15 @@
+newmtl hull
+Kd 0.88 0.89 0.91
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 30
+newmtl glass
+Kd 0.04 0.06 0.1
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 30
+newmtl trim
+Kd 0.55 0.57 0.62
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 30

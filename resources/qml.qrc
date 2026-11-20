@@ -2,6 +2,11 @@
     <qresource prefix="/">
         <file alias="qml/main.qml">../src/qml/main.qml</file>
         <file alias="qml/TelemetryCard.qml">../src/qml/TelemetryCard.qml</file>
+        <file alias="qml/InstrumentCluster.qml">../src/qml/InstrumentCluster.qml</file>
+        <file alias="qml/NavPath.qml">../src/qml/NavPath.qml</file>
+        <file alias="qml/HorizonTracker.qml">../src/qml/HorizonTracker.qml</file>
+        <file alias="qml/MissionMapView.qml">../src/qml/MissionMapView.qml</file>
+        <file alias="qml/GnssSource.qml">../src/qml/GnssSource.qml</file>
         <file alias="qml/qmldir">../src/qml/qmldir</file>
         <file alias="qml/hud/ArtificialHorizon.qml">../src/qml/hud/ArtificialHorizon.qml</file>
         <file alias="qml/hud/CompassTape.qml">../src/qml/hud/CompassTape.qml</file>
@@ -10,5 +15,6 @@
         <file alias="qml/video/FPVOverlay.qml">../src/qml/video/FPVOverlay.qml</file>
         <file alias="icons/boat.svg">icons/boat.svg</file>
         <file alias="icons/alert.svg">icons/alert.svg</file>
+        <file alias="qml/ConnectionsPanel.qml">../src/qml/ConnectionsPanel.qml</file>
     </qresource>
 </RCC>
