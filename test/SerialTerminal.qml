@@ -136,7 +136,11 @@ Item {
         selPort = portList.length > 0 ? portList[0].name : "";
     }
     onPortListChanged: pickDefaultPort()
-    onActiveChanged: if (active) { if (have) serial.refreshPorts(); pickDefaultPort(); if (have) selBaud = serial.baudRate; }
+    onActiveChanged: {
+        if (active) { if (have) serial.refreshPorts(); pickDefaultPort(); if (have) selBaud = serial.baudRate; }
+        else dropFocus();                                   // leaving the tab / closing the pop-up: the boat keys must work again
+    }
+    function dropFocus() { input.focus = false; portDd.opened = false; baudDd.opened = false; }
     Component.onCompleted: { pickDefaultPort(); if (have) selBaud = serial.baudRate; }
     Timer { interval: 2000; running: t.active && t.have; repeat: true; onTriggered: t.serial.refreshPorts() }
 
@@ -173,6 +177,11 @@ Item {
     // ================================================================ visuals
     readonly property real gap: px(14)
     readonly property real rightW: Math.max(px(380), width * 0.30)
+
+    MouseArea {     // a click on any empty spot drops the text-box focus
+        anchors.fill: parent; z: -1
+        onPressed: function(m) { t.dropFocus(); m.accepted = false; }
+    }
 
     // ---------------------------------------------------------------- left: toolbar + status + terminal + input
     Item {
@@ -277,7 +286,10 @@ Item {
             anchors.top: errLine.bottom; anchors.topMargin: t.px(8)
             anchors.left: parent.left; anchors.right: parent.right
             height: t.px(30)
-            Text { anchors.verticalCenter: parent.verticalCenter; text: "RAW TERMINAL"; color: t.tText; font.pixelSize: t.px(12); font.bold: true; font.letterSpacing: 1.6; font.family: "Segoe UI, Inter, sans-serif" }
+            Text { id: rawTitle; anchors.verticalCenter: parent.verticalCenter; text: "RAW TERMINAL"; color: t.tText; font.pixelSize: t.px(12); font.bold: true; font.letterSpacing: 1.6; font.family: "Segoe UI, Inter, sans-serif" }
+            Text { anchors.left: rawTitle.right; anchors.leftMargin: t.px(14); anchors.verticalCenter: parent.verticalCenter
+                   visible: t.have; text: "boat keys are OFF while this tab is open"; color: t.cWarn; opacity: 0.85
+                   font.pixelSize: t.px(11); font.family: "Segoe UI, Inter, sans-serif" }
             Row {
                 anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
                 spacing: t.px(8)
@@ -305,6 +317,7 @@ Item {
                 Text { x: t.px(14); anchors.verticalCenter: parent.verticalCenter; text: ">"; color: t.accent; font.pixelSize: t.px(15); font.bold: true; font.family: t.monoFamily }
                 TextInput {
                     id: input
+                    objectName: "termInput"
                     anchors.left: parent.left; anchors.leftMargin: t.px(34); anchors.right: parent.right; anchors.rightMargin: t.px(12)
                     anchors.verticalCenter: parent.verticalCenter
                     color: t.tText; font.pixelSize: t.px(14); font.family: t.monoFamily
@@ -312,6 +325,7 @@ Item {
                     enabled: t.connected
                     selectionColor: Qt.rgba(t.accent.r, t.accent.g, t.accent.b, 0.4)
                     onAccepted: t.sendLine()
+                    Keys.onEscapePressed: t.dropFocus()
                     Keys.onUpPressed: { if (t.history.length) { t.histPos = Math.max(0, t.histPos - 1); text = t.history[t.histPos]; } }
                     Keys.onDownPressed: { if (t.histPos < t.history.length - 1) { t.histPos++; text = t.history[t.histPos]; } else { t.histPos = t.history.length; text = ""; } }
                     Text { visible: !input.text.length; anchors.verticalCenter: parent.verticalCenter

@@ -800,7 +800,10 @@ class LoraBridge(QObject):
         w = self._window
         try:
             it = w.activeFocusItem() if w is not None else None
-            return it is not None and it.property("cursorPosition") is not None        # TextInput / TextEdit / TextField
+            if it is None or it.property("cursorPosition") is None:                    # not a TextInput / TextEdit / TextField
+                return False
+            # a text box that is hidden (pop-up closed / other tab) or disabled must never block the boat keys
+            return bool(it.property("visible")) and bool(it.property("enabled"))
         except Exception:
             return False
 
