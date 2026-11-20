@@ -17,5 +17,6 @@
         <file alias="icons/alert.svg">icons/alert.svg</file>
         <file alias="qml/ConnectionsPanel.qml">../src/qml/ConnectionsPanel.qml</file>
         <file alias="qml/LoraControlHud.qml">../src/qml/LoraControlHud.qml</file>
+        <file alias="qml/DriveRays.qml">../src/qml/DriveRays.qml</file>
     </qresource>
 </RCC>

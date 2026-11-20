@@ -6,11 +6,12 @@ import QtQuick
 //  Needs the Python context property `loraBridge` (backend/lora_bridge.py).  Without it the item hides itself, so the
 //  same Main.qml still runs in the C++ build.
 //
-//    pill   NO USB / USB - NO LORA / LORA LINKED   (tap = connect / disconnect the ESP32 serial port)
-//    keys   the five motor keys light up while held (the real keyboard drives them through the window key filter in
-//           lora_bridge.py; the tiles themselves can also be pressed and held on the touch screen)
-//    1-4    Engine / Mode / VTS up / VTS down - flash cyan when sent, green on STM32 ACK, amber when rejected
-//    bars   real throttle / steering / brake pot feedback while telemetry is fresh
+//    pill      NO USB / USB - NO LORA / LORA LINKED   (tap = connect / disconnect the ESP32 serial port)
+//    rays      DriveRays pop-up (see DriveRays.qml): TANDAV top view + front / back / side rays.  Appears when a drive
+//              key (Up / Down / Left / Right / Space) is pressed, hides itself 10 s after the last key.
+//              It sits to the LEFT of the 1-4 buttons, bottom aligned = where the old arrow tiles used to be.
+//    1-4       Engine / Mode / VTS up / VTS down - flash cyan when sent, green on STM32 ACK, amber when rejected
+//    bars      real throttle / steering / brake pot feedback while telemetry is fresh
 //
 //  Nothing here blocks the keyboard: key capture lives in Python (works whatever item has focus).
 // ============================================================================================================
@@ -21,6 +22,9 @@ Item {
     property real lm: 0.0                          // 0 night .. 1 day
     property color accent: "#00f0ff"
     property bool showKeys: true                   // false = only the status pill
+    property bool showRays: true                   // the new DriveRays pop-up
+    property bool showKeyTiles: false              // true = bring the old arrow / SPACE tiles back (touch-screen driving)
+    property int raysHideMs: 10000                 // DriveRays auto-hide after the last key activity
     property var bridge: (typeof loraBridge !== "undefined") ? loraBridge : null
 
     readonly property bool have: bridge !== null
@@ -48,6 +52,19 @@ Item {
     readonly property color tMuted: mixc("#8d9db2", "#5d6b7d")
     readonly property color pillColor: linked ? cOk : usb ? cWarn : cFail
     readonly property string pillText: linked ? "LORA LINKED" : usb ? "USB  -  NO LORA" : "NO USB  -  TAP TO CONNECT"
+
+    // ---- drive rays pop-up: overlay (does not take part in the layout), left of the 1-4 buttons, bottom aligned
+    DriveRays {
+        id: driveRays
+        visible: root.showRays && opacity > 0.01
+        enabled: false                              // never steals touches / clicks from what is behind it
+        sf: root.sf; lm: root.lm; accent: root.accent
+        hideMs: root.raysHideMs
+        bridge: root.bridge
+        x: root.showKeyTiles ? -(width + root.px(14) + root.px(46) * 3 + root.px(22)) : -(width + root.px(14))
+        y: root.height - height
+        z: 5
+    }
 
     Column {
         id: col
@@ -129,7 +146,8 @@ Item {
 
             Row {
                 spacing: root.px(14)
-                Column {                                           // arrow cluster
+                Column {                                           // OLD arrow cluster - hidden by default, replaced by DriveRays
+                    visible: root.showKeyTiles
                     spacing: root.px(4)
                     Item { width: root.px(46) * 3 + root.px(8); height: root.px(40)
                            KeyTile { x: root.px(46) + root.px(4); label: "↑"; sub: "THR +"; keyName: "Up" } }
