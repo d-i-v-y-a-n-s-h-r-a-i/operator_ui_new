@@ -21,6 +21,7 @@ Item {
     property real sf: 1.0
     property real lm: 0.0                          // 0 night .. 1 day
     property color accent: "#00f0ff"
+    property bool showPill: false                  // false = hide the "LORA LINKED" status pill
     property bool showKeys: true                   // false = only the status pill
     property bool showRays: true                   // the new DriveRays pop-up
     property bool showKeyTiles: false              // true = bring the old arrow / SPACE tiles back (touch-screen driving)
@@ -73,7 +74,9 @@ Item {
         // ------------------------------------------------------------------------------------------ status pill
         Rectangle {
             id: pill
-            height: root.px(28); radius: height / 2
+            visible: root.showPill
+            height: root.showPill ? root.px(28) : 0
+            radius: height / 2
             width: pillRow.implicitWidth + root.px(26)
             color: Qt.rgba(root.mixc("#0b121b", "#f3f6fa").r, root.mixc("#0b121b", "#f3f6fa").g, root.mixc("#0b121b", "#f3f6fa").b, 0.82)
             border.width: 1
