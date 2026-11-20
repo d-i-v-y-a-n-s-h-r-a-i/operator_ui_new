@@ -513,92 +513,22 @@ Item {
             }
         }
 
-        // ---- NAVIGATION PATH (Neuboat style) --------------------------------
-        // grey corridor around the boat, shiny blue lane AHEAD (fades with distance),
-        // green lane BEHIND (distance already covered). All three are flat 3D strips on
-        // the water, so they keep perspective and sit under the boat.
+        // ---- NAVIGATION PATH GRADIENT LINE ---------------------------------
         Model {
-            id: navCorridor
+            id: navPathModel
             source: "#Rectangle"
-            y: 0.06
-            z: -190                                   // spans z +60 ... -440
-            scale: Qt.vector3d(0.112, 5.0, 1.0)       // 11.2 wide x 500 long
-            eulerRotation.x: -90
+            y: 0.05
+            z: -140
+            scale: Qt.vector3d(0.08, 2.8, 1.0)
+            eulerRotation.x: 90
             materials: PrincipledMaterial {
                 lighting: PrincipledMaterial.NoLighting
                 baseColor: "#FFFFFF"
+                baseColorMap: Texture {
+                    source: "assets/nav_path_gradient.png"
+                }
                 alphaMode: PrincipledMaterial.Blend
                 cullMode: Material.NoCulling
-                baseColorMap: Texture {
-                    tilingModeHorizontal: Texture.ClampToEdge
-                    tilingModeVertical: Texture.ClampToEdge
-                    sourceItem: Rectangle {
-                        width: 8; height: 512
-                        gradient: Gradient {
-                            GradientStop { position: 0.00; color: Qt.rgba(0.60 - 0.24 * mapRoot.lm, 0.66 - 0.24 * mapRoot.lm, 0.82 - 0.32 * mapRoot.lm, 0.00) }
-                            GradientStop { position: 0.50; color: Qt.rgba(0.60 - 0.24 * mapRoot.lm, 0.66 - 0.24 * mapRoot.lm, 0.82 - 0.32 * mapRoot.lm, 0.07 - 0.02 * mapRoot.lm) }
-                            GradientStop { position: 0.75; color: Qt.rgba(0.60 - 0.24 * mapRoot.lm, 0.66 - 0.24 * mapRoot.lm, 0.82 - 0.32 * mapRoot.lm, 0.17 - 0.08 * mapRoot.lm) }
-                            GradientStop { position: 1.00; color: Qt.rgba(0.60 - 0.24 * mapRoot.lm, 0.66 - 0.24 * mapRoot.lm, 0.82 - 0.32 * mapRoot.lm, 0.22 - 0.11 * mapRoot.lm) }
-                        }
-                    }
-                }
-            }
-        }
-
-        Model {
-            id: navPathAhead
-            source: "#Rectangle"
-            y: 0.12
-            z: -208                                   // spans z +4 ... -420
-            scale: Qt.vector3d(0.076, 4.24, 1.0)      // 7.6 wide (= boat beam) x 424 long
-            eulerRotation.x: -90
-            materials: PrincipledMaterial {
-                lighting: PrincipledMaterial.NoLighting
-                baseColor: "#FFFFFF"
-                alphaMode: PrincipledMaterial.Blend
-                cullMode: Material.NoCulling
-                baseColorMap: Texture {
-                    tilingModeHorizontal: Texture.ClampToEdge
-                    tilingModeVertical: Texture.ClampToEdge
-                    sourceItem: Rectangle {
-                        width: 8; height: 512
-                        gradient: Gradient {
-                            GradientStop { position: 0.00; color: mapRoot.mixc(Qt.rgba(0.14, 0.46, 0.88, 0.00), Qt.rgba(0.34, 0.44, 0.63, 0.00)) }
-                            GradientStop { position: 0.28; color: mapRoot.mixc(Qt.rgba(0.14, 0.46, 0.88, 0.00), Qt.rgba(0.34, 0.44, 0.63, 0.00)) }
-                            GradientStop { position: 0.57; color: mapRoot.mixc(Qt.rgba(0.14, 0.47, 0.88, 0.12), Qt.rgba(0.34, 0.44, 0.63, 0.00)) }
-                            GradientStop { position: 0.73; color: mapRoot.mixc(Qt.rgba(0.15, 0.49, 0.90, 0.42), Qt.rgba(0.34, 0.44, 0.63, 0.13)) }
-                            GradientStop { position: 0.85; color: mapRoot.mixc(Qt.rgba(0.16, 0.50, 0.92, 0.82), Qt.rgba(0.34, 0.44, 0.63, 0.46)) }
-                            GradientStop { position: 0.94; color: mapRoot.mixc(Qt.rgba(0.18, 0.54, 0.96, 0.96), Qt.rgba(0.34, 0.44, 0.63, 0.78)) }
-                            GradientStop { position: 1.00; color: mapRoot.mixc(Qt.rgba(0.18, 0.54, 0.96, 0.96), Qt.rgba(0.34, 0.44, 0.63, 0.80)) }
-                        }
-                    }
-                }
-            }
-        }
-
-        Model {
-            id: navPathBehind
-            source: "#Rectangle"
-            y: 0.12
-            z: 31                                     // spans z +14 ... +48
-            scale: Qt.vector3d(0.076, 0.34, 1.0)      // 7.6 wide x 34 long
-            eulerRotation.x: -90
-            materials: PrincipledMaterial {
-                lighting: PrincipledMaterial.NoLighting
-                baseColor: "#FFFFFF"
-                alphaMode: PrincipledMaterial.Blend
-                cullMode: Material.NoCulling
-                baseColorMap: Texture {
-                    tilingModeHorizontal: Texture.ClampToEdge
-                    tilingModeVertical: Texture.ClampToEdge
-                    sourceItem: Rectangle {
-                        width: 8; height: 64
-                        gradient: Gradient {
-                            GradientStop { position: 0.0; color: mapRoot.mixc(Qt.rgba(0.00, 0.74, 0.54, 0.95), Qt.rgba(0.39, 0.73, 0.63, 0.95)) }
-                            GradientStop { position: 1.0; color: mapRoot.mixc(Qt.rgba(0.00, 0.74, 0.54, 0.95), Qt.rgba(0.39, 0.73, 0.63, 0.95)) }
-                        }
-                    }
-                }
             }
         }
 
