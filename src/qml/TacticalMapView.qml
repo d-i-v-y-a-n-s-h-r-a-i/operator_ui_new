@@ -439,6 +439,13 @@ Item {
         ]
     }
 
+    // ---- colours of the 3D navigation path (night -> day through lm) --------------------------
+    // reference (Neuboat) night values: blue #3473B8, green #00AE89, corridor = light grey-blue veil.
+    // The numbers below are the texture inputs that come out as exactly those colours on screen.
+    function navBlue(a)  { return mixc(Qt.rgba(0.19, 0.44, 0.73, a), Qt.rgba(0.30, 0.42, 0.63, a * 0.85)); }
+    function navGreen()  { return mixc(Qt.rgba(0.00, 0.70, 0.55, 0.97), Qt.rgba(0.30, 0.68, 0.58, 0.95)); }
+    function navCorr(a)  { return mixc(Qt.rgba(0.60, 0.65, 0.76, a), Qt.rgba(0.36, 0.42, 0.50, a * 0.55)); }
+
     View3D {
         id: tacticalScene3D
         anchors.fill: parent
@@ -513,22 +520,98 @@ Item {
             }
         }
 
-        // ---- NAVIGATION PATH GRADIENT LINE ---------------------------------
+        // ---- NAVIGATION PATH (Neuboat style) --------------------------------
+        // grey corridor around the boat, shiny blue lane AHEAD (fades with distance),
+        // green lane BEHIND (distance already covered). All three are flat 3D strips on
+        // the water, so they keep perspective and sit under the boat.
         Model {
-            id: navPathModel
+            id: navCorridor
             source: "#Rectangle"
-            y: 0.45
-            z: -140
-            scale: Qt.vector3d(0.08, 2.8, 1.0)
+            y: 0.35
+            z: -190                                   // spans z +60 ... -440
+            scale: Qt.vector3d(0.112, 5.0, 1.0)       // 11.2 wide x 500 long
             eulerRotation.x: -90
             materials: PrincipledMaterial {
                 lighting: PrincipledMaterial.NoLighting
                 baseColor: "#FFFFFF"
-                baseColorMap: Texture {
-                    source: "assets/nav_path_gradient.png"
-                }
                 alphaMode: PrincipledMaterial.Blend
                 cullMode: Material.NoCulling
+                baseColorMap: Texture {
+                    tilingModeHorizontal: Texture.ClampToEdge
+                    tilingModeVertical: Texture.ClampToEdge
+                    sourceItem: Rectangle {
+                        width: 8; height: 512
+                        gradient: Gradient {
+                            // flat grey-blue band, lightens the water by ~+18 right in front of the camera, ~+8 beside the boat,
+                            // nothing at the far end (measured on the Neuboat reference)
+                            GradientStop { position: 0.00; color: mapRoot.navCorr(0.00) }
+                            GradientStop { position: 0.38; color: mapRoot.navCorr(0.00) }
+                            GradientStop { position: 0.685; color: mapRoot.navCorr(0.02) }
+                            GradientStop { position: 0.889; color: mapRoot.navCorr(0.067) }
+                            GradientStop { position: 0.932; color: mapRoot.navCorr(0.15) }
+                            GradientStop { position: 1.00; color: mapRoot.navCorr(0.17) }
+                        }
+                    }
+                }
+            }
+        }
+
+        Model {
+            id: navPathAhead
+            source: "#Rectangle"
+            y: 0.45
+            z: -208                                   // spans z +4 ... -420
+            scale: Qt.vector3d(0.076, 4.24, 1.0)      // 7.6 wide (= boat beam) x 424 long
+            eulerRotation.x: -90
+            materials: PrincipledMaterial {
+                lighting: PrincipledMaterial.NoLighting
+                baseColor: "#FFFFFF"
+                alphaMode: PrincipledMaterial.Blend
+                cullMode: Material.NoCulling
+                baseColorMap: Texture {
+                    tilingModeHorizontal: Texture.ClampToEdge
+                    tilingModeVertical: Texture.ClampToEdge
+                    sourceItem: Rectangle {
+                        width: 8; height: 512
+                        gradient: Gradient {
+                            // flat matte blue (#3473B8 on the reference) that is solid next to the bow and
+                            // melts into the haze ~2.5x further out; profile measured on the Neuboat reference
+                            GradientStop { position: 0.00;  color: mapRoot.navBlue(0.00) }
+                            GradientStop { position: 0.731; color: mapRoot.navBlue(0.00) }
+                            GradientStop { position: 0.811; color: mapRoot.navBlue(0.09) }
+                            GradientStop { position: 0.864; color: mapRoot.navBlue(0.32) }
+                            GradientStop { position: 0.902; color: mapRoot.navBlue(0.69) }
+                            GradientStop { position: 0.931; color: mapRoot.navBlue(1.00) }
+                            GradientStop { position: 1.00;  color: mapRoot.navBlue(1.00) }
+                        }
+                    }
+                }
+            }
+        }
+
+        Model {
+            id: navPathBehind
+            source: "#Rectangle"
+            y: 0.45
+            z: 31                                     // spans z +14 ... +48
+            scale: Qt.vector3d(0.076, 0.34, 1.0)      // 7.6 wide x 34 long
+            eulerRotation.x: -90
+            materials: PrincipledMaterial {
+                lighting: PrincipledMaterial.NoLighting
+                baseColor: "#FFFFFF"
+                alphaMode: PrincipledMaterial.Blend
+                cullMode: Material.NoCulling
+                baseColorMap: Texture {
+                    tilingModeHorizontal: Texture.ClampToEdge
+                    tilingModeVertical: Texture.ClampToEdge
+                    sourceItem: Rectangle {
+                        width: 8; height: 64
+                        gradient: Gradient {
+                            GradientStop { position: 0.0; color: mapRoot.navGreen() }
+                            GradientStop { position: 1.0; color: mapRoot.navGreen() }
+                        }
+                    }
+                }
             }
         }
 
